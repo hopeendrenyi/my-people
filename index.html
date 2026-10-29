@@ -889,10 +889,12 @@
       <p class="eyebrow">want to connect?</p>
       <h2>Say hi</h2>
 
-      <!-- Formspree form (messages are emailed to Hope) -->
-      <form class="say-hi" action="https://formspree.io/f/xrppldea" method="POST" novalidate>
-        <input type="hidden" name="_subject" value="New hello from your website 👋">
-        <input type="text" name="_gotcha" class="gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <!-- Web3Forms form (messages are emailed to Hope). notifications go to the email registered with this access key -->
+      <form class="say-hi" action="https://api.web3forms.com/submit" method="POST" novalidate>
+        <input type="hidden" name="access_key" value="12dc1594-5bad-40ef-a4e7-f455360ae586">
+        <input type="hidden" name="subject" value="New hello from your website 👋">
+        <input type="hidden" name="from_name" value="Hope's website">
+        <input type="checkbox" name="botcheck" class="gotcha" tabindex="-1" aria-hidden="true">
 
         <div class="field">
           <label for="sh-name">Your name</label>
@@ -962,7 +964,7 @@
       const dots = document.createElement("div"); dots.className = "carousel-dots";
       slides.forEach((_, i) => { const d = document.createElement("button"); d.setAttribute("aria-label","Photo " + (i+1)); d.addEventListener("click", () => go(i)); dots.appendChild(d); });
       c.append(prev, next, dots);
-      const index = () => Math.round(track.scrollLeft / track.clientWidth);
+      const index = () => { const w = track.clientWidth; if (!w) return 0; return Math.max(0, Math.min(slides.length-1, Math.round(track.scrollLeft / w))); };
       const go = i => track.scrollTo({ left: Math.max(0, Math.min(i, slides.length-1)) * track.clientWidth, behavior: "smooth" });
       prev.addEventListener("click", () => go(index()-1));
       next.addEventListener("click", () => go(index()+1));
@@ -980,7 +982,7 @@
       sync();
     });
 
-    // Say hi form: send to Formspree without leaving the page
+    // Say hi form: send to Web3Forms without leaving the page
     (function () {
       var form = document.querySelector('form.say-hi');
       if (!form) return;
@@ -1025,7 +1027,9 @@
           body: new FormData(form),
           headers: { 'Accept': 'application/json' }
         }).then(function (res) {
-          if (res.ok) {
+          return res.json().then(function (data) { return { ok: res.ok && data && data.success !== false }; });
+        }).then(function (result) {
+          if (result.ok) {
             form.classList.add('sent');
             status.classList.add('ok');
             status.textContent = 'Got it! Thanks for saying hi, I’ll be in touch soon ❤️';
